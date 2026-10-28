@@ -1,320 +1,612 @@
 
-# MCP (Model Context Protocol)
+# MCP (Model Context Protocol) — Why Do We Need MCP?
 
-## 1. What Is MCP?
+## 1. Introduction
 
-**MCP stands for Model Context Protocol.** It is an open protocol that standardizes how AI applications communicate with external tools, data sources, and services.
+MCP stands for **Model Context Protocol**.
 
-An AI application may need information from repositories, files, databases, project-management systems, or messaging platforms. MCP provides a common way for the application to discover and use capabilities exposed by MCP servers.
+MCP addresses an important problem in the AI ecosystem: how can different AI applications connect to external tools and services without requiring developers to build and maintain separate custom integrations for every connection?
 
-In simple terms:
+To understand why MCP became important, we need to understand how AI applications evolved, why context is important, how function calling helped, and why the integration problem still remained.
 
-> MCP standardizes how AI applications connect to external tools and data.
-
-MCP does not automatically give an AI access to every service. The relevant servers must be configured, and access must be authorized.
+This README follows the concepts explained in the lecture.
 
 ---
 
-## 2. Why Do We Need MCP?
+## 2. Three Stages of AI Adoption
 
-AI applications often need to work with external systems. Without a shared protocol, developers may have to build and maintain custom integrations between each application and each service.
+The tutor explains the adoption of ChatGPT and AI through three stages.
 
-For example, different AI applications may need different services:
+### Stage 1: Pure Wonder
 
-- A general assistant may need Slack, Google Drive, and Jira.
-- A coding assistant may need GitHub and Jira.
-- An analytics assistant may need a database and Google Drive.
+When ChatGPT became available, people were amazed by its ability to understand and respond to natural language.
 
-Not every application needs every service. Custom integrations can be duplicated and become difficult to maintain.
+People experimented with different questions, explored its capabilities, and shared interesting responses on social media.
 
-MCP provides a standard interface so compatible AI applications can reuse integrations built for MCP servers.
+At this stage, people were mainly exploring what AI could do.
 
-### Without MCP
+### Stage 2: Professional Adoption
 
-- Each AI application may need custom code for each external service.
-- Developers may need to handle different request and response formats.
-- Integrations can be duplicated across applications.
-- Maintaining many custom connections can become complicated.
+People gradually realized that ChatGPT could help with professional work.
 
-### With MCP
+Examples included:
 
-- MCP defines a common communication protocol between clients and servers.
-- Servers expose capabilities in a standardized way.
-- Compatible clients can discover and invoke available tools.
-- Integrations can be reused, subject to configuration, compatibility, and permissions.
+- Summarizing long documents.
+- Debugging code.
+- Planning curricula.
+- Helping with research and writing.
+- Improving productivity.
 
-**Important:** MCP does not mean every AI application must connect to every MCP server. Each application connects only to the services it needs and is authorized to use.
+AI started becoming more than a chatbot for entertainment. It became a potential work partner.
 
----
+### Stage 3: The API Revolution
 
-## 3. Main Components of MCP
+AI capabilities began appearing in other software applications through model APIs and integrations.
 
-MCP commonly involves three main components: the host application, an MCP client, and one or more MCP servers.
+Existing applications started incorporating AI features, while new AI-powered tools also emerged.
 
-### 3.1 MCP Host
+AI was no longer restricted to a single chatbot. It became available across multiple applications and workflows.
 
-The **host** is the AI application that the user interacts with. It may contain an LLM, conversation logic, and a user interface.
+### The Problem That Emerged
 
-Examples include compatible AI assistants, coding agents, and AI applications built by developers.
+Although AI became more accessible, information and work became distributed across different AI applications and software services.
 
-### 3.2 MCP Client
-
-The **MCP client** is the component inside the host application that communicates with an MCP server.
-
-It handles MCP protocol communication, including discovering available capabilities and sending tool requests. The host application remains responsible for deciding how to use returned results.
-
-### 3.3 MCP Server
-
-An **MCP server** exposes capabilities from an external system through MCP.
-
-MCP servers can expose:
-
-- **Tools:** Operations an AI application can request, such as searching a repository.
-- **Resources:** Data or content that a client can retrieve.
-- **Prompts:** Reusable prompt templates that a client can discover or use.
-
-A server may communicate with an underlying API, database, local files, or another system to fulfill a request.
+This led to a problem called **fragmentation**.
 
 ---
 
-## 4. MCP Architecture
+## 3. The Problem of Fragmentation
+
+Fragmentation means that information and AI capabilities are spread across different applications that do not automatically share the necessary context.
+
+For example:
+
+- Notion may contain project information.
+- Slack may contain team discussions.
+- VS Code may contain source code.
+- GitHub may contain repositories.
+- Google Drive may contain documents.
+
+An AI assistant inside one application may not automatically know what is happening in another application.
+
+As a result, users may need to move between multiple applications to collect the information required to complete a task.
+
+The original vision was to have a unified AI assistant that could understand the relevant work and help solve problems end to end.
+
+However, information was scattered across multiple systems.
+
+**This leads to the next major problem: context assembly.**
+
+---
+
+## 4. What Is Context?
+
+**Context is the information an LLM uses to generate a response.**
+
+It can include:
+
+- Conversation history.
+- User instructions.
+- External documents.
+- Source code.
+- Database information.
+- Information retrieved from tools.
+- Other relevant information supplied to the model.
+
+The quality and relevance of the available context can affect how effectively an AI system helps with a task.
+
+### A Simple Example
+
+Suppose you are discussing quantum physics with an AI assistant.
+
+You ask:
+
+1. What is quantum physics?
+2. Where can I learn it?
+3. Which books are useful?
+4. How difficult is this topic?
+
+The assistant can use the earlier conversation to understand what you mean by "this topic."
+
+In this example, the conversation history provides context.
+
+However, professional tasks often require information from many different systems, making context assembly much more complicated.
+
+---
+
+## 5. The Context Assembly Problem
+
+Consider a software developer who needs to implement two-factor authentication in a product.
+
+The information required for the task may be distributed across several systems:
+
+| System | Information Required |
+|---|---|
+| Jira | Task requirements and assigned ticket |
+| GitHub | Current source code and repository information |
+| MySQL | Existing database schema |
+| Google Drive | Security guidelines and documentation |
+| Slack | Relevant team discussions |
+
+The developer needs to combine this information to understand the task properly.
+
+### Without Automated Tool Access
+
+The developer may need to:
+
+1. Open Jira and copy the ticket details.
+2. Open GitHub and retrieve relevant source code.
+3. Inspect the database schema.
+4. Find the security documentation in Google Drive.
+5. Search Slack for relevant discussions.
+6. Manually provide all this information to the AI assistant.
+
+Only after collecting and supplying the context can the developer ask the AI to help implement the feature.
+
+This is called **context assembly**.
+
+### Why Is This a Problem?
+
+- It consumes time before the actual task begins.
+- Information is scattered across different systems.
+- The user must repeatedly copy and paste information.
+- Important details may be missed.
+- The process becomes harder as projects and systems grow.
+- Manually collecting all relevant context does not scale well.
+
+The tutor describes developers in this situation as becoming **human APIs** because they manually move information between systems and the AI.
+
+### The Desired Solution
+
+Ideally, an AI application should be able to retrieve the necessary information from connected systems when needed, rather than relying on the user to manually assemble everything.
+
+This motivates the use of tools.
+
+---
+
+## 6. Function Calling: The First Step Toward Automated Context Retrieval
+
+Function calling allows an LLM-based application to request the execution of external functions.
+
+Instead of only generating text, a model can determine that a task requires a tool and request that the application invoke it.
+
+### How Function Calling Works
+
+Suppose an application provides a function named `load_file`.
+
+The application also provides a description explaining that the function retrieves the contents of a file.
+
+When the user asks:
+
+> Read the contents of `abc.txt`.
+
+The workflow can be:
+
+1. The model receives the user request and available function descriptions.
+2. It determines that `load_file` is appropriate.
+3. It requests a call with the required filename argument.
+4. The application executes the function.
+5. The function returns the file contents.
+6. The application provides the result to the model.
+7. The model uses the result to answer the user.
+
+Function calling allows applications to connect AI models to operations such as:
+
+- Retrieving files.
+- Querying databases.
+- Searching repositories.
+- Accessing weather information.
+- Performing web searches.
+
+### Why Was This Important?
+
+The AI application could retrieve external information through tools instead of relying entirely on information manually supplied by the user.
+
+This helped automate context assembly.
+
+---
+
+## 7. How Function Calling Helped With Context Assembly
+
+Consider the same two-factor authentication task.
+
+Suppose the AI application has tools for accessing Jira, GitHub, MySQL, Google Drive, and Slack.
+
+The developer could ask the assistant to retrieve:
+
+1. The Jira ticket requirements.
+2. The latest relevant code from GitHub.
+3. The database schema.
+4. The security guidelines.
+5. The relevant Slack discussions.
+
+The tools can retrieve the information, allowing the application to provide it to the model.
+
+The developer no longer needs to manually copy and paste every piece of information if the required integrations are available.
+
+This is a major improvement.
+
+However, **function calling does not automatically solve the integration problem**.
+
+---
+
+## 8. The Integration Problem
+
+Function calling requires an application to have access to appropriate functions and a mechanism for executing them.
+
+In a custom integration, developers may need to implement the logic that communicates with each external service.
+
+This can include:
+
+- Authentication.
+- API requests.
+- Input and output formatting.
+- Error handling.
+- Rate-limit handling.
+- Maintaining compatibility with external APIs.
+
+The tutor explains how this becomes difficult when an organization uses multiple AI applications and multiple external services.
+
+### Example: Three AI Applications and Twenty Services
+
+Suppose a company has three AI applications:
+
+1. A general-purpose assistant.
+2. A coding agent.
+3. An analytics agent.
+
+The company also uses twenty external services.
+
+If every AI application needs a custom integration with every service, the potential number of application-service integrations is:
+
+\[
+N \times M
+\]
+
+Where:
+
+- \(N\) = number of AI applications.
+- \(M\) = number of external services.
+
+In this example:
+
+\[
+3 \times 20 = 60
+\]
+
+That could mean sixty custom integrations in an architecture where every application needs every service.
+
+**Important:** This is a simplified worst-case illustration. In practice, each application only needs the services relevant to its tasks, so the actual number may be lower.
+
+### Problems With Many Custom Integrations
+
+#### 1. Development Complexity
+
+Each integration may require its own implementation, API handling, authentication, and error handling.
+
+#### 2. Maintenance Overhead
+
+If an external API changes, the integrations that depend on it may need updates.
+
+#### 3. Security Management
+
+Credentials and permissions may be distributed across multiple custom implementations, making consistent management more difficult.
+
+#### 4. Cost and Time
+
+Developing and maintaining many integrations requires engineering effort and resources.
+
+The original goal was to make AI applications more useful and improve productivity. Maintaining a large number of custom integrations can create another significant engineering burden.
+
+### What Do We Want Instead?
+
+Ideally, developers should be able to build an integration for a service once and reuse it across compatible AI applications.
+
+This is the integration problem that MCP aims to address.
+
+---
+
+## 9. What Is MCP?
+
+**Model Context Protocol (MCP) is a standard protocol for communication between AI applications and external tool or data servers.**
+
+The tutor explains MCP through two main entities:
+
+- **Client:** The AI application that wants to use external capabilities.
+- **Server:** The component that exposes those capabilities through MCP.
+
+The client and server communicate using the MCP protocol.
+
+### MCP Client
+
+The client is the component in an AI application that communicates with MCP servers.
+
+The host application may be ChatGPT, Claude, Cursor, Perplexity, or a custom AI application, provided it supports the relevant MCP connections.
+
+### MCP Server
+
+An MCP server exposes tools and other capabilities from an external system through a standardized interface.
+
+For example, a server may expose capabilities related to:
+
+- GitHub.
+- Google Drive.
+- Slack.
+- Databases.
+- Other APIs and internal services.
+
+The server handles the implementation required to provide its capabilities, including communication with the underlying service.
+
+### MCP Protocol
+
+The MCP protocol defines how the client and server communicate, including how capabilities are discovered and how requests and results are exchanged.
+
+The basic idea is to standardize the connection rather than requiring every AI application to invent its own integration method for every service.
+
+---
+
+## 10. MCP Architecture
 
 A simplified architecture looks like this:
 
 ```text
-                 AI Application (Host)
-                          |
-                     MCP Client
-                          |
-                   MCP Protocol
-                          |
-             +------------+------------+
-             |            |            |
-        MCP Server   MCP Server   MCP Server
-             |            |            |
-          GitHub      Google Drive    Slack
+                  AI Application
+                  (MCP Host)
+                       |
+                       v
+                   MCP Client
+                       |
+                 MCP Protocol
+                       |
+          +------------+------------+
+          |            |            |
+          v            v            v
+      MCP Server   MCP Server   MCP Server
+          |            |            |
+          v            v            v
+       GitHub      Google Drive    Slack
 ```
 
-Each server exposes its own capabilities. A client can connect to multiple servers when the host application supports and is configured for those connections.
+A single AI application can connect to multiple MCP servers.
 
-The MCP protocol standardizes communication between the client and server. It does not replace the APIs or internal systems that a server may use behind the scenes.
+Each server exposes the capabilities that it supports and that the application is authorized to use.
 
----
-
-## 5. How MCP Works: Step by Step
-
-Suppose a developer asks an AI assistant:
-
-> Find the README file in my GitHub repository.
-
-A possible workflow is:
-
-1. **Connection:** The host application connects its MCP client to a configured GitHub MCP server.
-2. **Discovery:** The client discovers the tools that the server makes available.
-3. **Model decision:** The application provides relevant tool information to the LLM. The model decides whether a tool call is appropriate.
-4. **Tool request:** The application asks the MCP client to invoke the selected tool with the required arguments.
-5. **Protocol message:** The client sends a structured request to the server using MCP.
-6. **Execution:** The server performs the operation, perhaps by calling the GitHub API.
-7. **Tool result:** The server returns the result through the MCP client.
-8. **Final response:** The host application supplies the result to the model, which can formulate an answer for the user.
-
-The exact sequence depends on the host application and the tool workflow. A task may require more than one tool call.
+The client and server communicate through the MCP protocol, while the server may use the underlying service's API to perform the requested operation.
 
 ---
 
-## 6. Technical Details: JSON-RPC and Transports
+## 11. Function Calling vs. MCP
 
-MCP uses **JSON-RPC 2.0** messages for protocol communication. These messages represent requests, results, and errors in a structured format.
-
-A simplified JSON-RPC request might look like this:
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/list",
-  "params": {}
-}
-```
-
-This example illustrates the general shape of a request to list tools. A real MCP exchange also follows the protocol's initialization and capability-negotiation requirements.
-
-MCP supports transports including:
-
-- **stdio:** The client communicates with a server through standard input and standard output. This is commonly used when a client launches a local server process.
-- **Streamable HTTP:** The client communicates with a server over HTTP, with streaming support as defined by the protocol.
-
-The appropriate transport depends on how the server is hosted and how the client is configured.
-
----
-
-## 7. Example: An MCP Tool in Python
-
-The following example uses the Python MCP SDK's `FastMCP` interface to register a tool.
-
-```python
-from mcp.server.fastmcp import FastMCP
-
-mcp = FastMCP("GitHub Tools")
-
-@mcp.tool()
-def search_repository(query: str) -> str:
-    """Search for files in a repository."""
-    # Add the actual repository-search implementation here.
-    return f"Search requested for: {query}"
-
-if __name__ == "__main__":
-    mcp.run()
-```
-
-### What Does This Code Do?
-
-- `FastMCP("GitHub Tools")` creates an MCP server instance.
-- `@mcp.tool()` registers the decorated function as a tool.
-- `search_repository()` defines the tool's name, input, and returned value.
-- `mcp.run()` starts the server using the SDK's configured default transport.
-
-**Note:** This is a minimal illustrative example. It does not connect to GitHub or perform a real repository search. That functionality must be implemented, and the server must be configured and launched by an MCP-compatible client.
-
----
-
-## 8. A Multi-Tool Workflow
-
-Suppose a developer asks:
-
-> Help me implement two-factor authentication in this project.
-
-With suitable MCP servers configured and authorized, an AI workflow could be:
-
-1. Retrieve the relevant Jira ticket to understand the requirements.
-2. Retrieve relevant code from GitHub.
-3. Request the necessary database schema information.
-4. Retrieve applicable security guidelines.
-5. Search relevant team discussions in Slack.
-6. Use the returned information to help plan or implement the feature.
-
-Each server communicates with its underlying service and returns the permitted results.
-
-The AI does not automatically have access to these systems. The relevant servers and tools must be available, configured, and authorized.
-
----
-
-## 9. Function Calling vs. MCP
-
-Function calling and MCP solve different problems. They can be used together.
+Function calling and MCP are related, but they solve different problems.
 
 | Aspect | Function Calling | MCP |
 |---|---|---|
-| Main purpose | Lets a model request that an application execute a function or tool. | Standardizes communication between AI applications and external tool/data servers. |
-| Main role | Tool selection and invocation flow within an application. | Common protocol for discovering and communicating with server capabilities. |
-| Execution | The application typically executes the requested function or arranges its execution. | An MCP server handles the requested capability and may call an underlying service or API. |
-| Integration | Function definitions and execution logic may be custom to an application. | Compatible clients can reuse servers that expose capabilities through MCP. |
-| Relationship | Can be used to decide when a tool should be called. | Can provide the standardized connection used to access the tool. |
+| Main purpose | Allows a model to request that an application execute a function or tool. | Standardizes communication between AI applications and external tool/data servers. |
+| Integration approach | Tool definitions and execution logic may be custom to an application. | Compatible clients can communicate with MCP servers through a common protocol. |
+| Tool execution | The application executes the requested function or arranges its execution. | The MCP server handles the requested capability and may call an underlying API. |
+| Reusability | Custom integrations may need to be repeated across applications. | A compatible MCP server can be reused by multiple compatible clients. |
+| Relationship | Helps the application decide when and how to request a tool call. | Provides a standardized way to discover and communicate with server capabilities. |
 
 ### How They Work Together
 
-An AI application may use function calling or a similar tool-selection mechanism to decide when to use a tool. If the tool is provided by an MCP server, the application can invoke it through its MCP client.
+MCP does not replace function calling.
 
-**MCP does not replace function calling.** Function calling and MCP can operate at different layers and work together.
+An AI application may use function calling or another tool-selection mechanism to decide which tool is appropriate.
 
----
+If the tool is exposed by an MCP server, the application can invoke it through its MCP client.
 
-## 10. How MCP Helps Multiple AI Applications
-
-Imagine there are three AI applications and several external services.
-
-A common misunderstanding is that every AI application must connect to every available tool. That is not required.
-
-| AI Application | Services It May Need |
-|---|---|
-| General assistant | Slack, Google Drive, Jira |
-| Coding assistant | GitHub, Jira |
-| Analytics assistant | Database, Google Drive |
-
-Each application connects only to the MCP servers relevant to its work.
-
-Without a common protocol, developers may need custom integrations for each application-service combination. MCP can reduce duplicated integration work by standardizing how compatible clients communicate with servers.
-
-The often-used comparison between `N × M` custom integrations and a more reusable MCP architecture is a simplified illustration, not a guarantee that every real deployment has exactly `N + M` integrations. The actual architecture depends on which services each application needs and which integrations already exist.
+The two mechanisms can operate at different layers of the same workflow.
 
 ---
 
-## 11. Benefits of MCP
+## 12. What Changes When We Use MCP?
 
-### Standardization
+Consider the example of connecting an AI application to GitHub.
 
-MCP defines a common way for compatible clients and servers to communicate.
+### With a Custom Integration
 
-### Reusability
+A developer may need to write application-specific code to:
 
-An MCP server can expose capabilities that multiple compatible applications may use, provided they are configured and authorized.
+- Call the GitHub API.
+- Handle authentication.
+- Format requests and responses.
+- Handle errors.
+- Convert the returned data into a format the application can use.
 
-### Modularity
+If another AI application needs the same capabilities, its developers may need to build another integration.
 
-Applications and service integrations can be developed and maintained as separate components.
+### With an MCP Server
 
-### Tool Discovery
+The GitHub-related capabilities can be exposed through an MCP server.
 
-Clients can discover the capabilities a server exposes through the protocol.
+An MCP-compatible client can connect to that server, discover its available tools, and request their execution.
 
-### Reduced Duplicated Integration Work
+The server handles the implementation needed to perform the operation and returns the result through MCP.
 
-Developers may avoid rebuilding the same service integration separately for every compatible application.
+The AI application still needs to support MCP, configure the connection, handle the tool results, and enforce appropriate permissions.
 
-### Flexible Connectivity
-
-An application can connect to multiple MCP servers when needed, rather than requiring one server to expose every possible service.
-
----
-
-## 12. Limitations and Security Considerations
-
-MCP is a communication protocol, not a guarantee of access, correctness, or security.
-
-- **Permissions still matter:** The application and server must be configured to access the relevant tools and data.
-- **Access should be limited:** Give servers and credentials only the permissions they need.
-- **Tool calls can have side effects:** Operations that modify files, create issues, or change data require appropriate safeguards.
-- **Server implementations vary:** A server's available tools and behavior depend on its implementation.
-- **The host still has responsibilities:** It must handle model decisions, tool requests, returned results, failures, and user interaction.
-- **MCP does not eliminate APIs:** An MCP server may use an external service's API internally.
-- **MCP does not guarantee correct answers:** The model can misinterpret returned information or use tools incorrectly.
-
-Only connect to MCP servers you trust, and review their permissions and behavior before granting access.
+**The main benefit is a reusable, standardized integration interface.**
 
 ---
 
-## 13. Key Terms
+## 13. Benefits of MCP
+
+### 1. Reduced Integration Duplication
+
+Instead of building a separate custom integration for every AI application and service combination, compatible applications can reuse MCP servers.
+
+### 2. Reduced Maintenance Work
+
+The implementation for an external service can be maintained in the relevant server rather than duplicated across multiple AI applications.
+
+Client and server implementations still need to be maintained, but the protocol can reduce duplicated integration work.
+
+### 3. Reduced Development Time and Cost
+
+Developers can connect compatible applications to existing MCP servers rather than implementing every integration from scratch.
+
+The actual time and cost savings depend on the services, available servers, and deployment requirements.
+
+### 4. More Centralized Integration Logic
+
+An MCP server can centralize service-specific logic, such as API communication, authentication handling, request formatting, and error handling.
+
+This can make integrations easier to manage.
+
+### 5. Reusable Tool Access
+
+Multiple compatible AI applications can use the same MCP server when their connections and permissions allow it.
+
+### 6. Easier Ecosystem Connectivity
+
+An AI application that supports MCP can potentially connect to many existing MCP servers without needing a completely separate custom protocol implementation for every service.
+
+**Important:** MCP does not automatically guarantee better security. Authentication, authorization, credential storage, and server permissions must still be implemented and managed correctly.
+
+---
+
+## 14. Understanding the Integration Formula
+
+The tutor contrasts a duplicated integration model with a more reusable MCP architecture.
+
+### Without a Shared Protocol
+
+If every one of \(N\) AI applications requires a custom integration with every one of \(M\) services, the potential number of integrations is:
+
+\[
+N \times M
+\]
+
+### With Reusable MCP Servers
+
+The lecture describes the architecture using the simplified comparison:
+
+\[
+N + M
+\]
+
+Here:
+
+- \(N\) represents the AI clients that support MCP.
+- \(M\) represents the service integrations exposed through MCP servers.
+
+For example, three AI applications and twenty services could be represented as:
+
+\[
+3 + 20 = 23
+\]
+
+This illustrates how standardization can reduce duplicated integration work.
+
+**This formula is a conceptual model, not a universal count of actual components or connections.** Real systems vary depending on which services each client needs, which integrations already exist, and how the infrastructure is deployed.
+
+---
+
+## 15. Why Is MCP Becoming Popular?
+
+The tutor explains MCP adoption through a network-effect argument.
+
+### AI Applications Adopt MCP
+
+When more AI applications support MCP, users and developers gain more ways to connect those applications to compatible MCP servers.
+
+### Service Providers Build MCP Servers
+
+When service providers make their capabilities available through MCP, more compatible AI applications can connect to them without requiring each client to implement a separate custom integration.
+
+### More Servers Increase Ecosystem Value
+
+As the number of useful MCP servers grows, MCP becomes more valuable to developers building new AI applications.
+
+### More Compatible Clients Increase Demand
+
+As more AI applications adopt MCP, service providers have a stronger incentive to expose their capabilities through MCP servers.
+
+### The Network Effect
+
+The relationship can be summarized as:
+
+```text
+More MCP-Compatible AI Applications
+                 |
+                 v
+          More Demand for
+             MCP Servers
+                 |
+                 v
+      More Available MCP Servers
+                 |
+                 v
+     More Value for AI Developers
+                 |
+                 v
+      More MCP Adoption
+```
+
+This creates a reinforcing cycle in which more compatible clients and servers can increase the usefulness of the ecosystem.
+
+The lecture presents this network effect as a reason MCP could become an important industry standard.
+
+---
+
+## 16. Important Limitations
+
+MCP standardizes communication, but it does not eliminate every integration or security challenge.
+
+- An AI application must support MCP and be configured to connect to a server.
+- An MCP server must implement the required capabilities.
+- Access to external systems must be authorized.
+- Servers may require credentials or other configuration.
+- Tool results must still be handled by the AI application.
+- The model may need multiple tool calls to gather sufficient context.
+- MCP does not guarantee that an AI model will always use tools correctly.
+- The client and server implementations still require maintenance.
+- Not every AI application needs every available MCP server.
+
+MCP reduces the need for duplicated custom integrations, but it does not make software integration completely effortless.
+
+---
+
+## 17. Key Terms
 
 | Term | Meaning |
 |---|---|
-| MCP | Model Context Protocol, a standard for communication between AI applications and external capabilities. |
-| Host | The AI application that manages the overall interaction. |
-| Client | The component that communicates with an MCP server. |
-| Server | The component that exposes tools, resources, and/or prompts through MCP. |
-| Tool | An operation a client can discover and request. |
-| Resource | Data or content made available through an MCP server. |
-| Prompt | A reusable prompt template exposed by a server. |
-| JSON-RPC | A structured remote procedure call protocol used for MCP messages. |
-| Transport | The mechanism used to carry protocol messages, such as stdio or Streamable HTTP. |
-| API | An interface that allows software to interact with a service. |
+| LLM | Large Language Model, a model that processes and generates language. |
+| Context | Information an LLM uses to generate a response. |
+| Context Assembly | Collecting relevant information from different sources and supplying it to the AI. |
+| Function Calling | A mechanism that allows a model to request execution of a function or tool. |
+| Tool | An operation an AI application can request. |
+| API | An interface through which software communicates with a service. |
+| MCP | Model Context Protocol, a standardized communication protocol for AI applications and external capabilities. |
+| MCP Client | The component that communicates with MCP servers. |
+| MCP Server | The component that exposes tools and other capabilities through MCP. |
+| Integration | The connection and implementation that allows two systems to work together. |
+| Network Effect | A situation where an ecosystem becomes more useful as participation and compatible connections grow. |
 
 ---
 
-## 14. Interview-Ready Definition
+## 18. Final Summary
 
-**MCP (Model Context Protocol) is an open protocol that standardizes how AI applications discover and interact with external tools and data sources.** It uses a client-server architecture and structured messages, including JSON-RPC, over supported transports such as stdio and Streamable HTTP.
+The lecture explains why MCP became important by following the evolution of AI applications.
 
-MCP can work alongside LLM function calling: function calling helps an application decide when to invoke a tool, while MCP standardizes communication with servers that expose tools and other capabilities.
+First, ChatGPT made AI accessible to a broad audience. AI capabilities then spread into professional workflows and other software applications.
 
----
+However, this created fragmentation: information was distributed across many different systems.
 
-## 15. Final Takeaways
+The context assembly problem emerged because users had to collect and manually provide information from those systems to their AI assistants.
 
-- MCP stands for **Model Context Protocol**.
-- It standardizes communication between AI applications and external tool/data servers.
-- The main components are the host application, MCP client, and MCP server.
-- MCP servers can expose tools, resources, and prompts.
-- MCP uses JSON-RPC messages and supports transports such as stdio and Streamable HTTP.
-- MCP can reduce duplicated integration work across compatible applications.
-- Not every AI application needs every MCP server.
-- MCP does not automatically grant access to data or replace security, permissions, APIs, or function calling.
+Function calling helped automate context retrieval by allowing AI applications to invoke tools. But when multiple AI applications needed access to many services, custom integrations created development, maintenance, security-management, time, and cost challenges.
+
+**MCP addresses this integration problem by standardizing communication between AI applications and external tool/data servers.**
+
+Its key benefits are:
+
+- Standardized communication.
+- Reusable integrations.
+- Reduced duplicated development work.
+- Easier connectivity across compatible AI applications and services.
+- An ecosystem that can grow through network effects.
+
+The central idea is simple:
+
+> Instead of every AI application building its own custom integration with every service, MCP provides a common protocol through which compatible clients can connect to servers that expose the required capabilities.
