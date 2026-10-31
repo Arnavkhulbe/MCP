@@ -1,0 +1,906 @@
+
+# MCP Practical Implementation – Connecting MCP Servers with Claude Desktop
+
+## 📌 Introduction
+
+In this lecture, we move from understanding MCP concepts to implementing MCP practically.
+
+Previously, we covered:
+
+1. **Why MCP?** – Why do we need the Model Context Protocol?
+2. **What is MCP?**
+   - MCP Architecture
+   - MCP Lifecycle
+
+Now, we are starting the **How part**, where we will learn how to implement MCP in projects.
+
+The instructor divides the practical implementation into three parts:
+
+| Part | What We Will Learn |
+|---|---|
+| Part 1 | Connect existing MCP servers with Claude Desktop |
+| Part 2 | Create our own MCP server and connect it with Claude Desktop |
+| Part 3 | Create our own MCP client and connect it with our MCP server |
+
+In this lecture, we use an existing MCP client (Claude Desktop) and existing MCP servers.
+
+---
+
+## 1. Understanding Local and Remote MCP Servers
+
+There are two types of MCP servers:
+
+### 1.1 Local MCP Servers
+
+- Installed and executed on our local machine.
+- The server runs on our computer.
+- The client communicates with the locally running server.
+
+**Examples from this lecture:**
+
+- Filesystem MCP Server
+- Manim MCP Server
+- Twitter/X MCP Server (although initially presented as remote, the instructor later clarifies that it actually runs locally).
+
+### 1.2 Remote MCP Servers
+
+- Hosted on remote machines or servers.
+- Accessible through the internet.
+- We do not need to keep the server's source code on our local machine.
+
+**Examples from this lecture:**
+
+- Google Drive MCP Server
+- Weather MCP Server
+
+---
+
+## 2. Two Ways to Connect MCP Servers with Claude Desktop
+
+Claude Desktop supports two approaches for connecting MCP servers.
+
+### Method 1: Configuration File
+
+This is the traditional method of connecting MCP servers.
+
+- AI hosts such as Claude Desktop and Cursor have configuration files.
+- These configuration files are generally JSON files.
+- We manually add the MCP server details to the configuration file.
+
+**Basic process:**
+
+1. Open the Claude Desktop settings.
+2. Navigate to the Developer section.
+3. Open the configuration file.
+4. Add the MCP server configuration.
+5. Save the file.
+6. Restart Claude Desktop.
+
+### Method 2: Connectors
+
+A **Connector** is a built-in feature that connects Claude Desktop to supported MCP servers without requiring manual configuration.
+
+Instead of editing a JSON file, we can connect supported services through the interface.
+
+**Basic process:**
+
+1. Open Claude Desktop.
+2. Click the Search and Tools option.
+3. Select Add Connectors.
+4. Find the required connector.
+5. Install or connect it.
+6. Complete authentication if required.
+
+### Why Do Connectors Exist?
+
+Most Claude Desktop users are non-technical users.
+
+They want to connect applications such as:
+
+- Google Drive
+- Gmail
+- Notion
+- Slack
+
+However, manually configuring MCP servers requires some technical knowledge.
+
+Users may need to:
+- Open configuration files.
+- Find server configuration instructions.
+- Add commands and arguments.
+- Configure authentication details.
+
+Connectors simplify this process.
+
+They handle much of the technical setup behind the scenes, including authentication and connection management.
+
+### Advantages of Connectors
+
+- **Easy to use:** Connect supported services through the interface.
+- **Less manual configuration:** No need to edit JSON files for supported connectors.
+- **Managed integration:** The connector provider manages the integration.
+- **Consistency:** A managed setup can reduce configuration mistakes.
+
+Connectors can be understood as an **App Store for MCP servers**.
+
+They provide a collection of integrations that users can connect to their AI hosts.
+
+---
+
+## 3. Why Can't Every MCP Server Use Connectors?
+
+There are two important reasons.
+
+### Reason 1: Connectors Are Curated and Managed
+
+Connectors are generally created for popular SaaS applications.
+
+For example:
+- Google Drive
+- Notion
+- Slack
+
+Creating and maintaining connectors requires work.
+
+The connector provider may need to manage:
+
+- Authentication flows
+- Login systems
+- Security updates
+- API keys
+- Rate limiting
+- Server maintenance
+
+There are thousands of MCP servers, and new ones are continuously being created.
+
+It is not scalable for one company to create and maintain connectors for every MCP server.
+
+### Reason 2: MCP Is an Open Standard
+
+MCP is designed as an open standard.
+
+This means:
+
+- Anyone can create an MCP client.
+- Anyone can create an MCP server.
+- Developers can connect their own MCP servers to compatible clients.
+
+Suppose every MCP server required an officially approved connector.
+
+The developer would have to:
+
+1. Create an MCP server.
+2. Submit it to the connector provider.
+3. Wait for review.
+4. Wait for a connector to be developed.
+5. Only then connect it to the AI host.
+
+This would reduce the openness of the MCP ecosystem.
+
+### Final Understanding
+
+Both connection methods are important.
+
+| Configuration File | Connectors |
+|---|---|
+| Manual setup | Simple interface-based setup |
+| Suitable for custom MCP servers | Suitable for supported integrations |
+| Developer-friendly | Beginner-friendly |
+| More control over configuration | Managed connection experience |
+
+**Remember:** Connectors make supported integrations easier, while configuration files allow developers to connect custom MCP servers without waiting for an official connector.
+
+---
+
+## 4. Installing Claude Desktop
+
+Before connecting MCP servers, we need Claude Desktop.
+
+### Steps
+
+1. Search for Claude Desktop Download on Google.
+2. Open the official download page.
+3. Download the version suitable for your operating system.
+4. Install Claude Desktop.
+5. Sign in to your account.
+
+After installation, open Claude Desktop.
+
+### Exploring Connectors
+
+To explore available connectors:
+
+1. Open Claude Desktop.
+2. Click Search and Tools.
+3. Select Add Connectors.
+4. Explore the available integrations.
+
+Claude Desktop provides different integration options, including desktop extensions and web-based integrations.
+
+---
+
+# 5. Connecting the Filesystem MCP Server
+
+<badge>Local MCP Server</badge>
+
+The Filesystem MCP Server allows an AI assistant to interact with files and directories on our computer.
+
+### What Can It Do?
+
+- Read files.
+- Search for files.
+- Create new files.
+- Write content into files.
+- Interact with permitted directories.
+
+### Step 1: Install the Filesystem Connector
+
+1. Open Claude Desktop.
+2. Click Search and Tools.
+3. Select Add Connectors.
+4. Navigate to Desktop Extensions.
+5. Search for Filesystem.
+6. Install the connector.
+
+### Step 2: Give Directory Access
+
+After installation, we need to specify which directories the server can access.
+
+For example, we can give it access to:
+
+- Desktop
+- Downloads
+- A specific coding project directory
+
+**Important:** The Filesystem MCP Server does not automatically get access to the entire computer.
+
+We explicitly specify the directories it can access.
+
+This is an important security feature because limiting directory access reduces the risk of unintended file operations.
+
+### Step 3: Enable and Restart
+
+1. Save the directory permissions.
+2. Enable the Filesystem connector.
+3. Close Claude Desktop.
+4. Restart Claude Desktop.
+
+Whenever we add a new MCP server, restarting the client may be necessary for the connection to become active.
+
+### Step 4: Check Available Tools
+
+After restarting:
+
+1. Open Search and Tools.
+2. Check whether Filesystem is connected.
+3. Inspect the tools available through the server.
+
+The host can discover available tools through the MCP tool-listing process.
+
+### Practical Demonstration
+
+**Example 1: Searching for PDF Files**
+
+Prompt:
+
+```text
+Can you tell me if there are any PDF files on my Desktop?
+```
+
+Claude uses the Filesystem MCP Server to search the permitted directory.
+
+The user must approve the requested tool operation when permission is required.
+
+**Example 2: Writing Python Code**
+
+Prompt:
+
+```text
+Write code to print Fibonacci numbers in Python.
+```
+
+Claude generates the code.
+
+Now ask:
+
+```text
+Write the first version in a .py file
+and save it on my Desktop.
+```
+
+Claude uses the Filesystem MCP Server to create and save the file.
+
+### Other Use Cases
+
+The Filesystem MCP Server can also help with:
+
+- Organizing a Downloads folder.
+- Renaming files.
+- Summarizing coding projects.
+- Searching through multiple files.
+- Creating files and folders.
+- Managing permitted directories.
+
+---
+
+# 6. Connecting the Manim MCP Server
+
+<badge>Local MCP Server</badge>
+
+## What Is Manim?
+
+Manim is a Python library used to create mathematical animations and visualizations.
+
+It is famously used by the YouTube channel **3Blue1Brown**.
+
+Manim helps create visual explanations of complex mathematical concepts.
+
+### Why Combine Manim with MCP?
+
+Traditionally, creating mathematical animations using Manim requires writing code manually.
+
+However, LLMs are good at generating code.
+
+By connecting an MCP server for Manim with Claude Desktop, we can:
+
+1. Describe a mathematical concept in natural language.
+2. Ask Claude to generate Manim code.
+3. Let Claude communicate with the Manim MCP Server.
+4. Execute the generated code.
+5. Generate a mathematical animation.
+
+**Input:** Natural-language prompt.
+
+**Output:** Mathematical animation or video.
+
+### Step 1: Install Prerequisites
+
+We need:
+
+- Python
+- Manim
+- MCP package
+
+Install Manim:
+
+```bash
+pip install manim
+```
+
+Install MCP:
+
+```bash
+pip install mcp
+```
+
+### Step 2: Clone the Manim MCP Server Repository
+
+The Manim MCP Server used in the lecture is a third-party project, not an official Manim server.
+
+Clone its GitHub repository.
+
+Example:
+
+```bash
+cd Desktop
+git clone <repository-url>
+```
+
+After cloning, the repository will be available on your local machine.
+
+### Step 3: Configure Claude Desktop
+
+Since a ready-made connector is not available for this server, we use the JSON configuration method.
+
+1. Open Claude Desktop.
+2. Navigate to Settings.
+3. Open Developer.
+4. Select Edit Config.
+5. Open the configuration file in VS Code.
+
+### Step 4: Add the Server Configuration
+
+Add the Manim server configuration inside the `mcpServers` object.
+
+The configuration needs the relevant details:
+
+- Python executable path.
+- Manim executable path, if required by the repository.
+- Manim MCP server script path.
+
+**Important:** Use the exact configuration provided in the Manim MCP Server repository's README.
+
+### Step 5: Find Executable Paths
+
+To find the Python executable path:
+
+```bash
+python -c "import sys; print(sys.executable)"
+```
+
+To find the Manim executable path:
+
+```bash
+where manim
+```
+
+To find the current directory path:
+
+```bash
+cd Desktop
+cd manim-mcp-server
+cd src
+```
+
+Then run:
+
+```bash
+cd
+```
+
+Or use the appropriate path command for your terminal to identify the current directory.
+
+Use the actual paths from your machine in the configuration file.
+
+### Step 6: Save and Restart
+
+1. Save the JSON configuration file.
+2. Close Claude Desktop.
+3. Open Claude Desktop again.
+4. Check whether the Manim MCP Server is connected.
+
+### Practical Demonstration
+
+The instructor uses the following prompt:
+
+```text
+Use the Manim server to create an animation showing
+the concept of vector transformation in linear algebra.
+
+First, create a 2D coordinate grid.
+
+Create two basis vectors:
+i and j.
+
+Apply a matrix transformation to the grid.
+
+Show the grid bending according to the matrix
+transformation.
+
+Also display the new transformed vectors.
+```
+
+### What Happens Behind the Scenes?
+
+1. The user sends a natural-language prompt to Claude.
+2. Claude understands the requested animation.
+3. Claude generates Manim code.
+4. Claude communicates with the Manim MCP Server.
+5. The server executes the generated code.
+6. Manim generates the animation.
+7. The resulting video is returned.
+
+### Important Note About LaTeX
+
+The instructor encounters an issue because LaTeX is not installed on his machine.
+
+Some mathematical symbols therefore do not render correctly.
+
+Installing LaTeX may improve mathematical typesetting, but the instructor mentions that the installation can be very large.
+
+### Benefits of Manim + MCP
+
+- Visualize difficult mathematical concepts.
+- Generate animations using natural language.
+- Reduce manual coding effort.
+- Visualize concepts from machine learning and deep learning.
+- Customize animations, themes, and text.
+
+---
+
+# 7. Connecting the Google Drive MCP Server
+
+<badge>Remote MCP Server</badge>
+
+Google Drive MCP integration allows Claude Desktop to access information stored in Google Drive.
+
+### Step 1: Open Connectors
+
+1. Open Claude Desktop.
+2. Click Search and Tools.
+3. Find the Google Drive connector.
+4. Select it.
+
+### Step 2: Authenticate
+
+1. Click Connect.
+2. Sign in using your Google account.
+3. Complete the authentication process.
+4. Allow the required permissions.
+
+After successful authentication, Google Drive becomes available in Claude Desktop.
+
+### Step 3: Test the Connection
+
+Suppose we have a document in Google Drive named:
+
+```text
+AI Newsletter Content Ideas
+```
+
+Prompt:
+
+```text
+Can you summarize the document from my Google Drive?
+```
+
+Claude searches Google Drive, retrieves the document, and generates a summary.
+
+### Important: Read-Only Access
+
+In the lecture, the Google Drive integration is demonstrated as read-only.
+
+This means:
+
+- We can read documents.
+- We can search for information.
+- We can summarize documents.
+
+But the demonstrated integration does not allow:
+
+- Creating new files.
+- Editing existing files.
+- Writing new content to Google Drive.
+
+---
+
+# 8. Connecting the Twitter/X MCP Server
+
+<badge>Local MCP Server</badge>
+
+The Twitter/X MCP Server allows Claude Desktop to interact with Twitter/X.
+
+### What Can It Do?
+
+The lecture demonstrates two tools:
+
+1. `search_tweets`
+2. `post_tweet`
+
+### Important Clarification
+
+Initially, the instructor describes this as a remote server.
+
+However, after examining its README, he realizes that it is actually a **local MCP server**.
+
+The configuration uses `npx` to run the server package on the local machine.
+
+Therefore, it is not an actual remote MCP server in this demonstration.
+
+### Step 1: Create a Twitter/X Developer Account
+
+1. Open the X Developer Portal.
+2. Sign in using your X account.
+3. Open the developer dashboard.
+4. Use the default project or create a new project.
+
+### Step 2: Open the API Keys and Tokens Section
+
+Navigate to:
+
+```text
+Developer Dashboard
+    |
+    └── Keys and Tokens
+```
+
+You need four credentials:
+
+1. API Key
+2. API Key Secret
+3. Access Token
+4. Access Token Secret
+
+Generate or regenerate the required credentials according to the developer portal instructions.
+
+**Security Warning:** Never share or publish these credentials. Do not upload them to GitHub.
+
+### Step 3: Configure Claude Desktop
+
+1. Open Claude Desktop.
+2. Navigate to Settings.
+3. Open Developer.
+4. Select Edit Config.
+5. Open the JSON configuration file.
+
+Add the Twitter MCP Server configuration inside the `mcpServers` object.
+
+Use the exact configuration from the server's GitHub README.
+
+### Step 4: Add API Credentials
+
+Add the four credentials to the appropriate environment variables in the configuration.
+
+Do not expose actual API keys in public repositories.
+
+### Step 5: Save and Restart
+
+1. Save the JSON file.
+2. Close Claude Desktop.
+3. Restart Claude Desktop.
+4. Check whether the Twitter MCP Server is connected.
+
+### Step 6: Test Searching Tweets
+
+Prompt:
+
+```text
+What are the top tweets on AI this week?
+```
+
+Claude uses the Twitter MCP Server to search tweets and returns the results.
+
+### Step 7: Test Posting a Tweet
+
+Prompt:
+
+```text
+Post a tweet on my behalf saying:
+Hello from campus!
+```
+
+The instructor encounters an authentication error while attempting to post.
+
+The reason identified in the lecture is that the account currently has read-only permissions.
+
+To post tweets, the developer application needs the appropriate read-and-write permissions.
+
+**Important:** The search operation works in the demonstration, but posting is unsuccessful because of the permission configuration.
+
+---
+
+# 9. Connecting the Weather MCP Server
+
+<badge>Remote MCP Server</badge>
+
+The Weather MCP Server is introduced as an example of a remote MCP server.
+
+Unlike the local Manim and Twitter servers, the server package is accessed through a remote repository path.
+
+### Step 1: Install UV
+
+The instructor uses UV to run the Weather MCP Server.
+
+Install UV if it is not already installed.
+
+### Step 2: Install Required Dependencies
+
+Follow the Weather MCP Server repository's installation instructions.
+
+Install the dependencies required by the project.
+
+### Step 3: Get an AccuWeather API Key
+
+The Weather MCP Server requires an API key from AccuWeather.
+
+Steps:
+
+1. Search for AccuWeather API.
+2. Open the official developer website.
+3. Create an account.
+4. Generate an API key.
+5. Copy the API key.
+
+The instructor mentions a free account with limited availability.
+
+Check the current API plan and limits before using it.
+
+### Step 4: Configure Claude Desktop
+
+Open:
+
+```text
+Claude Desktop
+    |
+    └── Settings
+         |
+         └── Developer
+              |
+              └── Edit Config
+```
+
+Add the Weather MCP Server configuration inside `mcpServers`.
+
+You need to configure:
+
+- The UVX executable path.
+- The Weather MCP Server package or repository reference.
+- The AccuWeather API key.
+
+Use the exact configuration from the server's GitHub README.
+
+### Step 5: Find the UVX Path
+
+On the terminal, use:
+
+```bash
+where uvx
+```
+
+Copy the actual executable path and use it in your configuration.
+
+### Step 6: Save and Restart
+
+1. Save the configuration.
+2. Close Claude Desktop.
+3. Restart Claude Desktop.
+4. Check whether the Weather tool appears.
+
+### Step 7: Test the Weather Server
+
+Prompt:
+
+```text
+Can you tell me the current weather of Gurgaon?
+```
+
+Claude attempts to use the Weather MCP Server.
+
+### Result of the Demonstration
+
+The instructor encounters a technical/API-related error while calling the Weather tool.
+
+Claude then attempts to find weather information through web search.
+
+**Important:** The Weather MCP Server did not work successfully in the instructor's demonstration.
+
+The lecture does not establish the exact cause of the error.
+
+---
+
+# 10. How to Discover New MCP Servers
+
+The instructor recommends a GitHub repository called:
+
+**Awesome MCP Servers**
+
+It provides a collection of MCP servers available in the MCP ecosystem.
+
+### What Can We Find There?
+
+- Different MCP server categories.
+- Tools and integrations.
+- Third-party MCP server projects.
+- Repositories for different applications.
+
+### Why Is It Useful?
+
+Suppose you want to connect an application to an AI assistant.
+
+You can:
+
+1. Open the Awesome MCP Servers repository.
+2. Explore the available categories.
+3. Search for the application or tool you need.
+4. Open the relevant MCP server repository.
+5. Read its README.
+6. Follow the installation and configuration instructions.
+
+The instructor also mentions that the Manim MCP Server was discovered through this repository.
+
+**Awesome MCP Servers acts as a discovery platform for MCP servers.**
+
+---
+
+# 11. Summary of All MCP Servers Demonstrated
+
+| MCP Server | Type | Connection Method | Purpose |
+|---|---|---|---|
+| Filesystem | Local | Connector | Read and manage permitted local files |
+| Manim | Local | JSON Configuration | Generate mathematical animations |
+| Google Drive | Remote | Connector | Search and read Google Drive documents |
+| Twitter/X | Local | JSON Configuration | Search tweets and attempt to post tweets |
+| Weather | Remote | JSON Configuration | Retrieve weather information |
+
+**Note:** The instructor initially planned to demonstrate two local and two remote servers. During the lecture, he corrected the classification of Twitter/X and clarified that it was a local server.
+
+---
+
+# 12. Important Concepts to Remember
+
+### 1. MCP Client and MCP Server
+
+Communication takes place between the MCP client and MCP server.
+
+In this lecture:
+
+- Claude Desktop acts as the MCP client/host.
+- Filesystem, Manim, Google Drive, Twitter/X, and Weather provide MCP server functionality.
+
+### 2. Local MCP Server
+
+A local MCP server runs on our machine.
+
+Examples:
+
+- Filesystem
+- Manim
+- Twitter/X (in this lecture)
+
+### 3. Remote MCP Server
+
+A remote MCP server runs on a remote machine and is accessed through a network connection.
+
+Examples:
+
+- Google Drive
+- Weather (as presented in this lecture)
+
+### 4. Connectors
+
+Connectors simplify the process of connecting supported MCP integrations.
+
+They reduce the need for manual configuration.
+
+### 5. JSON Configuration
+
+JSON configuration allows us to connect custom MCP servers manually.
+
+It is especially useful when a ready-made connector is not available.
+
+### 6. User Permissions
+
+MCP tool operations may require user approval.
+
+For example:
+
+- Reading files.
+- Creating files.
+- Searching external services.
+- Posting content.
+
+Always review the requested operation and its permissions before approving it.
+
+### 7. Security
+
+- Give local servers access only to necessary directories.
+- Never expose API keys or access tokens.
+- Avoid committing secrets to GitHub.
+- Review the permissions granted to external integrations.
+
+---
+
+# 13. Final Takeaway
+
+In this lecture, we learned how to practically connect MCP servers with Claude Desktop.
+
+We explored two connection methods:
+
+1. **Connectors** – For easy, supported integrations.
+2. **JSON Configuration** – For manually connecting MCP servers.
+
+We also explored different MCP server use cases:
+
+- Filesystem MCP Server for local file management.
+- Manim MCP Server for mathematical animations.
+- Google Drive MCP Server for accessing documents.
+- Twitter/X MCP Server for searching tweets.
+- Weather MCP Server for weather information.
+
+The most important understanding is that **MCP allows an AI application to communicate with external tools and services through a standardized protocol.**
+
+Instead of manually performing every operation, we can describe what we want in natural language, and the AI assistant can use the connected MCP tools to perform the required operations.
+
+---
+
+## 🚀 What Comes Next?
+
+The next lecture will move beyond ready-made MCP servers.
+
+We will learn how to:
+
+1. Build our own MCP server.
+2. Connect that custom MCP server to Claude Desktop.
+3. Understand how the client and our own server communicate.
+
+This will help us move from simply using MCP servers to actually developing them.
